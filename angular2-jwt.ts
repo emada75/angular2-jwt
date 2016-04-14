@@ -1,6 +1,6 @@
 import {Injectable, Injector} from 'angular2/core';
 import {Http, HTTP_PROVIDERS, Headers, BaseRequestOptions, Request, RequestOptions, RequestOptionsArgs, RequestMethod, Response} from 'angular2/http';
-import {Observable} from 'rxjs/Observable';
+import * as Rx from 'rxjs/Rx';
 
 // Avoid TS error "cannot find name escape"
 declare var escape: any;
@@ -40,7 +40,7 @@ export class AuthConfig {
     }
     this.tokenName = this.config.tokenName || 'id_token';
     this.tokenGetter = this.config.tokenGetter || (() => localStorage.getItem(this.tokenName));
-    this.refresh = this.config.refresh || (() => Observable.of(null));
+    this.refresh = this.config.refresh || (() => Rx.Observable.of<any>(null));
     this.refreshOffset = this.config.refreshOffset || 60;
     this.noJwtError = this.config.noJwtError || false;
   }
@@ -67,37 +67,37 @@ export class AuthConfig {
 export class AuthHttp {
 
   private _config: IAuthConfig;
-  public tokenStream: Observable<string>;
+  public tokenStream: Rx.Observable<string>;
   private jwtHelper:JwtHelper;
 
   constructor(options: AuthConfig, private http: Http) {
     this._config = options.getConfig();
     this.jwtHelper = new JwtHelper();
 
-    this.tokenStream = new Observable((obs: any) => {
+    this.tokenStream = Rx.Observable.create((obs: Rx.Subscriber<string>) => {
       obs.next(this._config.tokenGetter())
     });
   }
 
-  public request(url: string | Request, options?: RequestOptionsArgs) : Observable<Response> {
+  public request(url: string | Request, options?: RequestOptionsArgs) : Rx.Observable<Response> {
     let responseObservable:any;
 
     // this is observable as it may need to come from an http call ...
-    let refreshToken:Observable<string>;
+    let refreshToken: Rx.Observable<string>;
 
-    var token = this._config.tokenGetter()
+    var token: string = this._config.tokenGetter()
     if (token && this.jwtHelper.isTokenExpired(token, this._config.refreshOffset)) {
       refreshToken = this._config.refresh();
     } else {
-      refreshToken = Observable.of(token);
+      refreshToken = Rx.Observable.of(token);
     }
 
-    responseObservable = refreshToken.flatMap(token => {
+    responseObservable = refreshToken.flatMap((token: string) => {
       if (!tokenNotExpired(null, token)) {
         if (this._config.noJwtError) {
           token = null;
         } else {
-          return Observable.throw('Invalid JWT');
+          return Rx.Observable.throw('Invalid JWT');
         }
       }
       if(typeof url === 'string') {
@@ -128,7 +128,7 @@ export class AuthHttp {
     return responseObservable;
   }
 
-  private requestHelper(requestArgs: RequestOptionsArgs, additionalOptions: RequestOptionsArgs) : Observable<Response> {
+  private requestHelper(requestArgs: RequestOptionsArgs, additionalOptions: RequestOptionsArgs) : Rx.Observable<Response> {
     let options = new RequestOptions(requestArgs);
 
     if(additionalOptions) {
@@ -138,27 +138,27 @@ export class AuthHttp {
     return this.request(new Request(options))
   }
 
-  get(url: string, options?: RequestOptionsArgs) : Observable<Response> {
+  get(url: string, options?: RequestOptionsArgs) : Rx.Observable<Response> {
     return this.requestHelper({ url:  url, method: RequestMethod.Get }, options);
   }
 
-  post(url: string, body: string, options?: RequestOptionsArgs) : Observable<Response> {
+  post(url: string, body: string, options?: RequestOptionsArgs) : Rx.Observable<Response> {
     return this.requestHelper({ url:  url, body: body, method: RequestMethod.Post }, options);
   }
 
-  put(url: string, body: string, options ?: RequestOptionsArgs) : Observable<Response> {
+  put(url: string, body: string, options ?: RequestOptionsArgs) : Rx.Observable<Response> {
     return this.requestHelper({ url:  url, body: body, method: RequestMethod.Put }, options);
   }
 
-  delete(url: string, options ?: RequestOptionsArgs) : Observable<Response> {
+  delete(url: string, options ?: RequestOptionsArgs) : Rx.Observable<Response> {
     return this.requestHelper({ url:  url, method: RequestMethod.Delete }, options);
   }
 
-  patch(url: string, body:string, options?: RequestOptionsArgs) : Observable<Response> {
+  patch(url: string, body:string, options?: RequestOptionsArgs) : Rx.Observable<Response> {
     return this.requestHelper({ url:  url, body: body, method: RequestMethod.Patch }, options);
   }
 
-  head(url: string, options?: RequestOptionsArgs) : Observable<Response> {
+  head(url: string, options?: RequestOptionsArgs) : Rx.Observable<Response> {
     return this.requestHelper({ url:  url, method: RequestMethod.Head }, options);
   }
 
