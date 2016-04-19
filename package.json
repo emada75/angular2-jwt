@@ -26,10 +26,10 @@
   "typings": "./angular2-jwt.d.ts",
   "homepage": "https://github.com/auth0/angular2-jwt#readme",
   "dependencies": {
-    "angular2": "2.0.0-beta.15",
+    "angular2": "2.0.0-beta.7",
     "es6-promise": "3.1.2",
-    "es6-shim": "0.35.0",
-    "zone.js": "^0.6.10",
+    "es6-shim": "0.33.3",
+    "zone.js": "^0.5.15",
     "rxjs": "5.0.0-beta.2",
     "reflect-metadata": "0.1.2",
     "typings": "0.7.12"
